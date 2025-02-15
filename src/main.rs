@@ -3,6 +3,7 @@
 
 use std::mem::MaybeUninit;
 use crate::characters::character::Character;
+use crate::characters::cooldown_character::CooldownCharacter;
 use crate::characters::lily::Lily;
 
 mod characters{
@@ -14,6 +15,10 @@ mod characters{
 
 
 fn main() {
+    let bruh = &Lily::default();
 
+    bruh.set_cooldown(4);
+
+    println!("{}",bruh.get_cooldown())
 
 }

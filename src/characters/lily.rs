@@ -1,11 +1,11 @@
 use crate::characters::character::{Character, CharacterBehaviour, CharacterData};
-use crate::characters::cooldown_character::{CooldownCharacter, CooldownCharacterBehaviour, CooldownData};
+use crate::characters::cooldown_character::{CooldownCharacter, DefaultCooldownCharacterBehaviour, CooldownData};
 
 
 
 pub struct Lily{
     character_data: CharacterData<Self>,
-    cooldown_character_behaviour: Option<CooldownCharacterBehaviour>,
+    cooldown_character_behaviour: Option<DefaultCooldownCharacterBehaviour>,
     cooldown_character_data: CooldownData,
 }
 impl Default for Lily{
@@ -17,7 +17,7 @@ impl Default for Lily{
         };
 
         created.cooldown_character_behaviour =
-            Some(CooldownCharacterBehaviour::new(&created));
+            Some(DefaultCooldownCharacterBehaviour::new(&created));
 
         created.add_death_listener(|myself|{
            println!("I AM THE YAPPER");
@@ -31,7 +31,8 @@ impl CooldownCharacter for Lily{
     }
 }
 impl Character for Lily {
-    fn behaviour(&self) -> &dyn CharacterBehaviour<Self>
+    type Behaviour = DefaultCooldownCharacterBehaviour;
+    fn behaviour(&self) -> &Self::Behaviour
     where
         Self: Sized
     {

@@ -19,13 +19,14 @@ pub trait CharacterBehaviour<TCharacter: Character>{
 
 pub trait Character{
 
+    type Behaviour: CharacterBehaviour<Self> + ?Sized where Self: Sized;
 
     fn add_death_listener(&self,kk: fn(&Self))
     where Self: Sized{
         self.character_data().on_death.borrow_mut().push(kk);
     }
     fn on_death(&self);
-    fn behaviour(&self) -> &dyn CharacterBehaviour<Self> where Self: Sized;
+    fn behaviour(&self) -> &Self::Behaviour where Self: Sized;
     fn character_data(&self) -> &CharacterData<Self> where Self: Sized;
     fn can_move(&self) -> bool;
 
