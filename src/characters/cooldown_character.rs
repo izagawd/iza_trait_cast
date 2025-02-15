@@ -16,9 +16,7 @@ impl Default for CooldownData {
 pub struct DefaultCooldownCharacterBehaviour;
 
 
-trait CooldownCharacterBehaviour<TCharacter : CooldownCharacter> : 
-CharacterBehaviour<TCharacter> {
-    
+trait CooldownCharacterBehaviour<TCharacter : CooldownCharacter> : CharacterBehaviour<TCharacter> {
     fn set_cooldown(&self, character: &TCharacter, cooldown: i32){
         character.cooldown_data().cooldown.set(cooldown) 
     }
