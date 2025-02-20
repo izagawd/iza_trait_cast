@@ -43,10 +43,5 @@ mod tests {
         } else{
             assert!(false,"Casting failed despite registering the vtable for dyn Child");
         }
-
-
     }
-
-
-
 }
