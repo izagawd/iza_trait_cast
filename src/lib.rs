@@ -1,7 +1,7 @@
 #![feature(allocator_api)]
 
-mod cast_fns;
-mod trait_registry;
+pub mod cast_fns;
+pub mod trait_registry;
 mod unsafe_fns;
 
 #[cfg(test)]

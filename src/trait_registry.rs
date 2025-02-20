@@ -31,6 +31,7 @@ pub(crate) fn get_vtable(input: &(impl Castable + ?Sized), trait_type_id: TypeId
             drop(temp_val);
             let  mut temp_registration = TypeRegistration::new(obj_type_id);
 
+
             input.register(&mut temp_registration);
             let mut unwrapped =TYPE_REGISTRY.write().unwrap();
             unwrapped.insert(obj_type_id, temp_registration);
