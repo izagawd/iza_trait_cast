@@ -1,5 +1,5 @@
 #![feature(allocator_api)]
-
+#![allow(warnings)]
 pub mod cast_fns;
 pub mod trait_registry;
 mod unsafe_fns;

@@ -52,7 +52,7 @@ pub struct TypeRegistration{
 }
 
 impl TypeRegistration {
-    pub fn register<'a,TCastTo: Any + ?Sized + 'static>
+    pub fn register<'a,TCastTo: Castable + ?Sized + 'static>
     (&mut self, object_to_register_for: &'a TCastTo)
     where &'a TCastTo: Into<&'a TCastTo>{
         assert!(object_to_register_for.type_id() == self.concrete_type_id,
