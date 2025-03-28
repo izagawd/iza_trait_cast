@@ -3,8 +3,8 @@
 #![feature(specialization)]
 #![feature(ptr_metadata)]
 pub mod trait_registry;
- mod unsafe_fns;
-mod cast_fns;
+mod unsafe_fns;
+pub mod cast_fns;
 
 
 #[cfg(test)]
