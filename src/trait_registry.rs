@@ -1,13 +1,8 @@
-
 use std::any::{Any, TypeId};
 use std::collections::hash_map::Entry;
 use std::collections::HashMap;
-use std::fs::Metadata;
-use std::marker::PhantomData;
 use std::mem::transmute;
 use std::ptr::DynMetadata;
-use std::sync::RwLock;
-use crate::unsafe_fns::generic_transmute;
 
 /// A container for storing and mapping vtables of all registered trait implementations for a concrete type.
 ///
@@ -148,7 +143,6 @@ pub(crate) fn get_vtable(obj: &(impl Any + ?Sized), trait_type_id: TypeId, type_
             }
         }
         None => {
-            let kk : PhantomData<i32>;
             Err("Type not registered")
         }
     }
