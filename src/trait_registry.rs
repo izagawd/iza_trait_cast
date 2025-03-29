@@ -57,11 +57,11 @@ impl<TraitReg: TraitVTableRegisterer> TraitVTableRegistry<TraitReg> {
             }
             impl<T: $trt> AsDynImpl for AsDyn<T> {
                 fn as_dyn() -> Option<Metadata>{
-                    Some(ptr::metadata(ptr::null::<T>() as *const dyn $trt))
+                    Some(::std::ptr::metadata(::std::ptr::null::<T>() as *const dyn $trt))
                 }
             }
             if let Some(gotten) =AsDyn::<$typ>::as_dyn(){
-               unsafe{ crate::trait_registry::TypeVTableMapper::register_vtable::<_,$typ>($reg, gotten);}
+               unsafe{ ::iza_trait_cast::trait_registry::TypeVTableMapper::register_vtable::<_,$typ>($reg, gotten);}
             };
         }
     };
