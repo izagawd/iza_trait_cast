@@ -89,7 +89,8 @@ impl<TraitReg: TraitVTableRegisterer> TraitVTableRegistry<TraitReg> {
 #[macro_export]
 #[allow_internal_unstable(specialization, ptr_metadata)]
 macro_rules! register_trait_for_type {
-    (dyn $trt:path, $typ:ty,  $reg:ident) => {
+    (dyn $trt:path, $typ:ty,  $reg:ident) =>
+    {
         {
             type Metadata = ::std::ptr::DynMetadata<dyn $trt>;
             struct AsDyn<T: ?Sized>{
@@ -108,8 +109,9 @@ macro_rules! register_trait_for_type {
                     Some(::std::ptr::metadata(::std::ptr::null::<T>() as *const dyn $trt))
                 }
             }
+
             unsafe{
-                if let Some(gotten) =AsDyn::<$typ>::as_dyn(){
+                if let Some(gotten) = <AsDyn<$typ> as AsDynImpl>::as_dyn(){
                     $crate::trait_registry::RegistererHelper::register_vtable::<_,$typ>($reg, gotten);
 
                 };
