@@ -74,7 +74,13 @@ use std::any;
             panic!("Casting failed despite registering the vtable for dyn Child");
         }
     }
-
+    #[test]
+    fn registered_type_checker(){
+        let mut vtable_holder = TraitVTableRegistry::<TestRegisterer>::default();
+        vtable_holder.register_type::<TestStruct>();
+        assert!(vtable_holder.is_type_registered(&TypeId::of::<TestStruct>()),"Type not properly registered, or method that checks if a type is registered is not working correctly");
+        assert!(!vtable_holder.is_type_registered(&TypeId::of::<i32>()),"Says the type i32 is registered, despitemthe fact that it is not");
+    }
     // Test that casting without registering the type returns a TypeNotRegistered error.
     #[test]
     fn unregistered_type_error_test() {
