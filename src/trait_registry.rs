@@ -179,29 +179,32 @@ pub trait TraitVTableRegisterer {
 pub enum VTableError{
     TraitNotImplemented{
         trait_name: &'static str,
-        trait_type_id: TypeId,
+        trait_id: TypeId,
+        type_name: &'static str,
+        type_id: TypeId,
     },
     TraitNotRegistered{
         trait_name: &'static str,
-        trait_type_id: TypeId,
+        trait_id: TypeId,
     },
     TypeNotRegistered{
         type_name: &'static str,
         type_id: TypeId,
+
     }
 
 }
 impl Debug for VTableError{
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::TraitNotImplemented{trait_name, .. } => {
-                f.write_fmt(format_args!("trait {} not implemented", trait_name))
+            Self::TraitNotImplemented{trait_name, type_name,.. } => {
+                f.write_fmt(format_args!("trait {trait_name} not implemented by {type_name}"))
             },
             Self::TraitNotRegistered{trait_name, .. } => {
-                f.write_fmt(format_args!("trait {} not registered", trait_name))
+                f.write_fmt(format_args!("trait {trait_name} not registered"))
             },
             Self::TypeNotRegistered{ type_name, .. } => {
-                f.write_fmt(format_args!("type {} not registered", type_name))
+                f.write_fmt(format_args!("type {type_name} not registered"))
             }
         }
 
@@ -224,9 +227,9 @@ pub(crate) fn get_vtable<TCastTo: ?Sized + 'static>(obj: &(impl Castable + ?Size
             match type_registration.vtables.get(&TypeId::of::<TCastTo>()) {
                 None => {
                     if type_registry.is_trait_registered(&TypeId::of::<TCastTo>()) {
-                        Err(VTableError::TraitNotImplemented {trait_name: type_name::<TCastTo>(), trait_type_id: TypeId::of::<TCastTo>()})
+                        Err(VTableError::TraitNotImplemented {trait_name: type_name::<TCastTo>(), trait_id: TypeId::of::<TCastTo>(), type_id: obj_type_id, type_name: obj.type_name()})
                     } else{
-                        Err(VTableError::TraitNotRegistered{trait_name: type_name::<TCastTo>(), trait_type_id: TypeId::of::<TCastTo>()})
+                        Err(VTableError::TraitNotRegistered{trait_name: type_name::<TCastTo>(), trait_id: TypeId::of::<TCastTo>()})
                     }
                 }
                 Some(gotten) => {
