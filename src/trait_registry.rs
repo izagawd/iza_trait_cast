@@ -1,6 +1,7 @@
-use std::any::{Any, TypeId};
+use std::any::{type_name, Any, TypeId};
 use std::collections::hash_map::Entry;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
+use std::fmt::{Debug, Formatter};
 use std::mem::transmute;
 use std::ptr::DynMetadata;
 
@@ -15,13 +16,25 @@ use std::ptr::DynMetadata;
 /// object matches the expected concrete type before insertion.
 pub struct TraitVTableRegistry<T: TraitVTableRegisterer>{
     registerer: T,
-    trait_registration_mapper: HashMap<TypeId, TypeVTableMapper>
+    trait_registration_mapper: HashMap<TypeId, TypeVTableMapper>,
+    registered_traits: HashSet<TypeId>
 }
+
 impl<T: Default + TraitVTableRegisterer> Default for TraitVTableRegistry<T> {
     fn default() -> Self {
         Self{
+            registered_traits: HashSet::new(),
             registerer: T::default(),
             trait_registration_mapper: HashMap::new()
+        }
+    }
+}
+impl<T: TraitVTableRegisterer> TraitVTableRegistry<T> {
+    fn new(registerer: T) -> Self {
+        Self{
+            registerer,
+            trait_registration_mapper: HashMap::new(),
+            registered_traits: HashSet::new()
         }
     }
 }
@@ -83,7 +96,7 @@ macro_rules! register_trait_for_type {
                 }
             }
             if let Some(gotten) =AsDyn::<$typ>::as_dyn(){
-               unsafe{ ::iza_trait_cast::trait_registry::TypeVTableMapper::register_vtable::<_,$typ>($reg, gotten);}
+               unsafe{ $crate::trait_registry::TypeVTableMapper::register_vtable::<_,$typ>($reg, gotten);}
             };
         }
     };
@@ -147,17 +160,58 @@ pub trait TraitVTableRegisterer {
     }
 }
 
+pub enum VTableError{
+    TraitNotImplemented{
+        trait_name: &'static str,
+        trait_type_id: TypeId,
+    },
+    TraitNotRegistered{
+        trait_name: &'static str,
+        trait_type_id: TypeId,
+    },
+    TypeNotRegistered{
+        type_name: &'static str,
+        type_id: TypeId,
+    }
 
+}
+impl Debug for VTableError{
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::TraitNotImplemented{trait_name, .. } => {
+                f.write_fmt(format_args!("trait {} not implemented", trait_name))
+            },
+            Self::TraitNotRegistered{trait_name, .. } => {
+                f.write_fmt(format_args!("trait {} not registered", trait_name))
+            },
+            Self::TypeNotRegistered{ type_name, .. } => {
+                f.write_fmt(format_args!("type {} not registered", type_name))
+            }
+        }
 
+    }
+}
+pub trait Castable: Any{
+    fn type_name(&self) -> &'static str;
+}
+impl<T: Any> Castable for T{
+    fn type_name(&self) -> &'static str {
+        type_name::<Self>()
+    }
+}
 /// Gets the vtable
-pub(crate) fn get_vtable(obj: &(impl Any + ?Sized), trait_type_id: TypeId, type_registry: &TraitVTableRegistry<impl TraitVTableRegisterer>) -> Result<&'static (), &'static str>{
+pub(crate) fn get_vtable<TCastTo: ?Sized + 'static>(obj: &(impl Castable + ?Sized),  type_registry: &TraitVTableRegistry<impl TraitVTableRegisterer>) -> Result<&'static (), VTableError>{
     let obj_type_id = obj.type_id();
     let type_registration_maybe =type_registry.trait_registration_mapper.get(&obj_type_id);
     match type_registration_maybe{
         Some(type_registration) => {
-            match type_registration.vtables.get(&trait_type_id) {
+            match type_registration.vtables.get(&TypeId::of::<TCastTo>()) {
                 None => {
-                    Err("Trait not implemented")
+                    if type_registry.registered_traits.contains(&TypeId::of::<TCastTo>()){
+                        Err(VTableError::TraitNotRegistered{trait_name: type_name::<TCastTo>(), trait_type_id: obj_type_id})
+                    } else{
+                        Err(VTableError::TraitNotImplemented {trait_name: type_name::<TCastTo>(), trait_type_id: TypeId::of::<TCastTo>()})
+                    }
                 }
                 Some(gotten) => {
                     Ok(*gotten)
@@ -165,7 +219,7 @@ pub(crate) fn get_vtable(obj: &(impl Any + ?Sized), trait_type_id: TypeId, type_
             }
         }
         None => {
-            Err("Type not registered")
+            Err(VTableError::TypeNotRegistered {type_id: obj_type_id, type_name: obj.type_name()})
         }
     }
 
@@ -179,7 +233,6 @@ pub struct TypeVTableMapper {
 impl TypeVTableMapper {
     /// Registers the vtable of trait TCastTo for the object
     pub unsafe fn register_vtable<TCastTo: 'static + ?Sized, TType: Any>(&mut self,   vtable: DynMetadata<TCastTo>) {
-
         self.vtables.insert(TypeId::of::<TCastTo>(), transmute(vtable));
     }
     fn new(concrete_type_id: TypeId) -> TypeVTableMapper {

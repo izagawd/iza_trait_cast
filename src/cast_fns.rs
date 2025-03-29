@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use std::any::type_name;
 use std::any::Any;
-use crate::trait_registry::{get_vtable, TraitVTableRegisterer, TraitVTableRegistry};
+use crate::trait_registry::{get_vtable, Castable, TraitVTableRegisterer, TraitVTableRegistry, VTableError};
 use std::any::TypeId;
 use crate::unsafe_fns::generic_transmute;
 // macro, to avoid repeating code
@@ -15,7 +15,7 @@ macro_rules! cast_reference {
                         size_of::<&$TTo>() == size_of::<&dyn Any>(),
             "TTo must be a dyn Trait!! eg:\n cast::<dyn Any>(&from);");
 
-            let vtable =  get_vtable($from,TypeId::of::<$TTo>(),$reg);
+            let vtable =  get_vtable::<$TTo>($from,$reg);
             match vtable {
                 Ok(vtable) => {
                     let mut to_v : (& (), &'static ()) =
@@ -39,12 +39,12 @@ macro_rules! cast_reference {
     };
 }
 
-pub fn cast_ref<'a,TTo: ?Sized + 'static>(from: &(impl Any + ?Sized), reg: &TraitVTableRegistry<impl TraitVTableRegisterer>) -> Result<&'a TTo, &'static str> {
+pub fn cast_ref<'a,TTo: ?Sized + 'static>(from: &(impl Castable + ?Sized), reg: &TraitVTableRegistry<impl TraitVTableRegisterer>) -> Result<&'a TTo, VTableError> {
     cast_reference!(TTo,from,reg)
 }
 
 
-pub fn cast_mut<'a,TTo: ?Sized + 'static>(from: &mut (impl Any + ?Sized), reg: &TraitVTableRegistry<impl TraitVTableRegisterer>) -> Result<&'a mut TTo, &'static str> {
+pub fn cast_mut<'a,TTo: ?Sized + 'static>(from: &mut (impl Castable + ?Sized), reg: &TraitVTableRegistry<impl TraitVTableRegisterer>) -> Result<&'a mut TTo, VTableError> {
     cast_reference!(TTo,from,reg)
 }
 
