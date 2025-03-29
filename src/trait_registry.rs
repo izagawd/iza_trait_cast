@@ -198,13 +198,13 @@ impl Debug for VTableError{
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::TraitNotImplemented{trait_name, type_name,.. } => {
-                f.write_fmt(format_args!("trait {trait_name} not implemented by {type_name}"))
+                f.write_fmt(format_args!("trait '{trait_name}' not implemented by the underlying concrete type '{type_name}'"))
             },
             Self::TraitNotRegistered{trait_name, .. } => {
-                f.write_fmt(format_args!("trait {trait_name} not registered"))
+                f.write_fmt(format_args!("trait '{trait_name}' not registered"))
             },
             Self::TypeNotRegistered{ type_name, .. } => {
-                f.write_fmt(format_args!("type {type_name} not registered"))
+                f.write_fmt(format_args!("type '{type_name}' not registered"))
             }
         }
 
@@ -245,6 +245,7 @@ pub(crate) fn get_vtable<TCastTo: ?Sized + 'static>(obj: &(impl Castable + ?Size
 }
 pub struct RegistererHelper<'a>{
     type_vtable_mapper: &'a mut TypeVTableMapper,
+    /// Used to keep track of the traits that are registered
     registered_traits: &'a mut HashSet<TypeId>,
 }
 
