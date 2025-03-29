@@ -1,5 +1,4 @@
 #![feature(allocator_api)]
-#![allow(warnings)]
 #![feature(specialization)]
 #![feature(ptr_metadata)]
 #![feature(allow_internal_unstable)]
@@ -11,17 +10,15 @@ pub mod cast_fns;
 use crate::trait_registry::{Castable, TypeVTableMapper};
 
 
-use std::any::Any;
-use std::ptr;
-use std::ptr::DynMetadata;
 use crate::trait_registry::{TraitVTableRegisterer, TraitVTableRegistry};
+use std::any::Any;
 #[cfg(test)]
 mod tests {
-    use std::any;
-    use std::any::{type_name, TypeId};
+    use std::any::type_name;
+use std::any;
+    use std::any::TypeId;
+    use crate::trait_registry::VTableError;
     use super::*;
-    use crate::cast_fns;
-    use crate::trait_registry::{VTableError, TraitVTableRegistry, TraitVTableRegisterer};
 
     // Define our test traits.
     trait Base: Castable {

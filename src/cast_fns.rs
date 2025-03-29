@@ -1,12 +1,7 @@
-use std::alloc::Allocator;
-use std::rc::Rc;
-use std::sync::Arc;
-
+use crate::trait_registry::{get_vtable, Castable, TraitVTableRegisterer, TraitVTableRegistry, VTableError};
+use crate::unsafe_fns::generic_transmute;
 use std::any::type_name;
 use std::any::Any;
-use crate::trait_registry::{get_vtable, Castable, TraitVTableRegisterer, TraitVTableRegistry, VTableError};
-use std::any::TypeId;
-use crate::unsafe_fns::generic_transmute;
 // macro, to avoid repeating code
 macro_rules! cast_reference {
     ($TTo:ty, $from:expr, $reg:expr) => {

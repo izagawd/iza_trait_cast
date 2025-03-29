@@ -44,7 +44,7 @@ impl<TraitReg: TraitVTableRegisterer> TraitVTableRegistry<TraitReg> {
         let type_id = TypeId::of::<T>();
         let type_registration = match self.trait_registration_mapper.entry(type_id) {
             Entry::Occupied(entry) => entry.into_mut(),
-            Entry::Vacant(entry) => entry.insert(TypeVTableMapper::new(type_id)),
+            Entry::Vacant(entry) => entry.insert(TypeVTableMapper::new()),
         };
         self.registerer.register_trait_vtables_for_type::<T>(type_registration);
     }
@@ -225,8 +225,8 @@ pub(crate) fn get_vtable<TCastTo: ?Sized + 'static>(obj: &(impl Castable + ?Size
 
 }
 /// Holds vtables of traits for a type
+#[derive(Default)]
 pub struct TypeVTableMapper {
-    concrete_type_id: TypeId,
     vtables: HashMap<TypeId, &'static ()>
 }
 
@@ -235,7 +235,7 @@ impl TypeVTableMapper {
     pub unsafe fn register_vtable<TCastTo: 'static + ?Sized, TType: Any>(&mut self,   vtable: DynMetadata<TCastTo>) {
         self.vtables.insert(TypeId::of::<TCastTo>(), transmute(vtable));
     }
-    fn new(concrete_type_id: TypeId) -> TypeVTableMapper {
-        TypeVTableMapper {concrete_type_id, vtables: HashMap::new()}
+    fn new() -> TypeVTableMapper {
+        TypeVTableMapper { vtables: HashMap::new()}
     }
 }
