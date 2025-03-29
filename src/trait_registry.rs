@@ -178,7 +178,7 @@ pub struct TypeVTableMapper {
 
 impl TypeVTableMapper {
     /// Registers the vtable of trait TCastTo for the object
-    pub unsafe fn register_vtable<TCastTo: Any + ?Sized, TType: Any>(&mut self,   vtable: DynMetadata<TCastTo>) {
+    pub unsafe fn register_vtable<TCastTo: 'static + ?Sized, TType: Any>(&mut self,   vtable: DynMetadata<TCastTo>) {
 
         self.vtables.insert(TypeId::of::<TCastTo>(), transmute(vtable));
     }
