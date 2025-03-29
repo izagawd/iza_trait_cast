@@ -39,8 +39,30 @@ impl<TraitReg: TraitVTableRegisterer> TraitVTableRegistry<TraitReg> {
 
 
 
-
-#[macro_export] macro_rules! register_trait_for_type {
+/// ## Example
+///
+/// ```
+/// use std::any::Any;
+/// use iza_trait_cast::register_trait_for_type;///
+///
+///
+/// use iza_trait_cast::trait_registry::{TraitVTableRegisterer, TypeVTableMapper};
+///
+/// struct MyRegisterer;
+///
+/// trait Other : Any{}
+///
+/// impl TraitVTableRegisterer for MyRegisterer{
+///     fn register_trait_vtables_for_type<T: Any>(&self, registry: &mut TypeVTableMapper) {
+///        register_trait_for_type!(dyn Other, T, registry);
+///        // now if type T implements dyn Other, it will be able to be casted to it
+///        // even when the compiler does not know the concrete type of the object
+///    }
+/// }
+/// ```
+#[macro_export]
+#[allow_internal_unstable(specialization, ptr_metadata)]
+macro_rules! register_trait_for_type {
     (dyn $trt:path, $typ:ty,  $reg:ident) => {
         {
             type Metadata = ::std::ptr::DynMetadata<dyn $trt>;

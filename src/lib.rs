@@ -2,6 +2,7 @@
 #![allow(warnings)]
 #![feature(specialization)]
 #![feature(ptr_metadata)]
+#![feature(allow_internal_unstable)]
 pub mod trait_registry;
 mod unsafe_fns;
 pub mod cast_fns;
