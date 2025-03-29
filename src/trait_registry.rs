@@ -53,9 +53,11 @@ impl<TraitReg: TraitVTableRegisterer> TraitVTableRegistry<TraitReg> {
         self.registerer.register_trait_vtables_for_type::<T>(&mut helper);
 
     }
+    #[inline]
     pub fn is_trait_registered(&self,type_id: &TypeId) -> bool {
         self.registered_traits.contains(type_id)
     }
+    #[inline]
     pub fn is_type_registered(&self,type_id: &TypeId) -> bool {
         self.trait_registration_mapper.contains_key(type_id)
     }

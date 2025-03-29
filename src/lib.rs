@@ -2,8 +2,9 @@
 #![feature(specialization)]
 #![feature(ptr_metadata)]
 #![feature(allow_internal_unstable)]
+#![feature(const_type_name)]
 pub mod trait_registry;
-mod unsafe_fns;
+mod handy_functions;
 pub mod cast_fns;
 
 

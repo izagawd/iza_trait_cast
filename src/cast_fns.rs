@@ -1,14 +1,18 @@
 use crate::trait_registry::{get_vtable, Castable, TraitVTableRegisterer, TraitVTableRegistry, VTableError};
-use crate::unsafe_fns::generic_transmute;
+use crate::handy_functions::generic_transmute;
 use std::any::type_name;
+use crate::handy_functions::comptime_str_eq;
 use std::any::Any;
 // macro, to avoid repeating code
 macro_rules! cast_reference {
     ($TTo:ty, $from:expr, $reg:expr) => {
         {
-            assert!(type_name::<$TTo>().starts_with("dyn ") &&
-                        size_of::<&$TTo>() == size_of::<&dyn Any>(),
-            "TTo must be a dyn Trait!! eg:\n cast::<dyn Any>(&from);");
+            // checks if generic input is a dyn T
+            const {
+                assert!( comptime_str_eq(type_name::<$TTo>().split_at(4).0, "dyn ") &&
+                            size_of::<&$TTo>() == size_of::<&dyn Any>(),
+                "TTo must be a dyn Trait!! eg:\n cast::<dyn Any>(&from);");
+            }
 
             let vtable =  get_vtable::<$TTo>($from,$reg);
             match vtable {
