@@ -17,7 +17,7 @@ mod tests {
     use std::any::type_name;
 use std::any;
     use std::any::TypeId;
-    use crate::trait_registry::VTableError;
+    use crate::trait_registry::{RegistererHelper, VTableError};
     use super::*;
 
     // Define our test traits.
@@ -53,7 +53,7 @@ use std::any;
     #[derive(Default)]
     struct TestRegisterer;
     impl TraitVTableRegisterer for TestRegisterer {
-        fn register_trait_vtables_for_type<T: Any>(&self, registry: &mut TypeVTableMapper) {
+        fn register_trait_vtables_for_type<T: Any>(&self, registry: &mut RegistererHelper) {
             register_trait_for_type!(dyn Base, T, registry);
             register_trait_for_type!(dyn Child, T, registry);
         }
@@ -92,6 +92,7 @@ use std::any;
         }
     }
 
+
     // Test that casting to a trait that the type does not implement returns a TraitNotImplemented error.
     #[test]
     fn trait_not_implemented_error_test() {
@@ -102,7 +103,6 @@ use std::any;
         let result = cast_fns::cast_ref::<dyn Child>(as_base, &vtable_holder);
         match result {
             Err(VTableError::TraitNotImplemented { trait_name, trait_type_id }) => {
-                // trait_name should include "Child"
                 assert_eq!(type_name::<dyn Child>(), trait_name, "Invalid trait name");
                 assert_eq!(TypeId::of::<dyn Child>(), trait_type_id, "Incorrect type id");
             }
@@ -144,7 +144,7 @@ use std::any;
         #[derive(Default)]
         struct EmptyRegisterer;
         impl TraitVTableRegisterer for EmptyRegisterer {
-            fn register_trait_vtables_for_type<T: Any>(&self, _registry: &mut TypeVTableMapper) {
+            fn register_trait_vtables_for_type<T: Any>(&self, registry: &mut RegistererHelper) {
                 // Intentionally do nothing.
             }
         }
@@ -157,11 +157,11 @@ use std::any;
         // Attempt to cast to UnregisteredTrait, expecting an error.
         let result = cast_fns::cast_ref::<dyn UnregisteredTrait>(as_trait, &registry);
         match result {
-            Err(VTableError::TraitNotImplemented { trait_name, trait_type_id}) => {
+            Err(VTableError::TraitNotRegistered { trait_name, trait_type_id}) => {
                 assert_eq!(trait_name, any::type_name::<dyn UnregisteredTrait>(), "Error: Trait name did not match");
                 assert_eq!(trait_type_id, TypeId::of::<dyn UnregisteredTrait>(), "Error: trait type  did not match");
             },
-            _ => panic!("Expected a TraitNotImplemented error because the trait was not registered"),
+            _ => panic!("Expected a TraitNotRegistered error because the trait was not registered"),
         }
     }
 }
