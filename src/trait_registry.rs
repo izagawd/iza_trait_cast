@@ -30,7 +30,7 @@ impl<T: Default + TraitVTableRegisterer> Default for TraitVTableRegistry<T> {
     }
 }
 impl<T: TraitVTableRegisterer> TraitVTableRegistry<T> {
-    fn new(registerer: T) -> Self {
+    pub fn new(registerer: T) -> Self {
         Self{
             registerer,
             trait_registration_mapper: HashMap::new(),
