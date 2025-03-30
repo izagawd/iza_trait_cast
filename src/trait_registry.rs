@@ -99,7 +99,7 @@ macro_rules! register_trait_for_type {
             trait AsDynImpl{
                 fn as_dyn() -> Option<Metadata>;
             }
-            impl<T> AsDynImpl for AsDyn<T> {
+            impl<T: ?Sized> AsDynImpl for AsDyn<T> {
                 default fn as_dyn() -> Option<Metadata>{
                     None
                 }
