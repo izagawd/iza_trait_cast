@@ -3,6 +3,7 @@
 #![feature(ptr_metadata)]
 #![feature(allow_internal_unstable)]
 #![feature(const_type_name)]
+#![feature(type_alias_impl_trait)]
 pub mod trait_registry;
 mod handy_functions;
 pub mod cast_fns;
