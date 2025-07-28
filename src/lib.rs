@@ -4,6 +4,8 @@
 #![feature(allow_internal_unstable)]
 #![feature(const_type_name)]
 #![feature(type_alias_impl_trait)]
+#![feature(unsize)]
+
 pub mod trait_registry;
 mod handy_functions;
 pub mod cast_fns;
@@ -55,9 +57,9 @@ use std::any;
     #[derive(Default)]
     struct TestRegisterer;
     impl TraitVTableRegisterer for TestRegisterer {
-        fn register_trait_vtables_for_type<T: Any>(&self, registry: &mut RegistererHelper) {
-            register_trait_for_type!(dyn Base, T, registry);
-            register_trait_for_type!(dyn Child, T, registry);
+        fn register_trait_vtables_for_type<T: Any>(&self, registry: &mut RegistererHelper<T>) {
+            registry.register_trait_for_type::<dyn Base>();
+            registry.register_trait_for_type::<dyn Child>();
         }
     }
 
@@ -121,7 +123,7 @@ use std::any;
         }
     }
 
-    // Optionally, test the mutable casting functionality.
+    //  Testing the mutable casting functionality.
     #[test]
     fn mutable_cast_validity_test() {
         let mut test_instance = TestStruct;
@@ -155,7 +157,7 @@ use std::any;
         #[derive(Default)]
         struct EmptyRegisterer;
         impl TraitVTableRegisterer for EmptyRegisterer {
-            fn register_trait_vtables_for_type<T: Any>(&self, registry: &mut RegistererHelper) {
+            fn register_trait_vtables_for_type<T: Any>(&self, registry: &mut RegistererHelper<T>) {
                 // Intentionally do nothing.
             }
         }
@@ -169,7 +171,7 @@ use std::any;
         let result = cast_fns::cast_ref::<dyn UnregisteredTrait>(as_trait, &registry);
         match result {
             Err(VTableError::TraitNotRegistered { trait_name, trait_id: trait_type_id }) => {
-                assert_eq!(trait_name, any::type_name::<dyn UnregisteredTrait>(), "Error: Trait name did not match");
+                assert_eq!(trait_name, type_name::<dyn UnregisteredTrait>(), "Error: Trait name did not match");
                 assert_eq!(trait_type_id, TypeId::of::<dyn UnregisteredTrait>(), "Error: trait type  did not match");
             },
             _ => panic!("Expected a TraitNotRegistered error because the trait was not registered"),

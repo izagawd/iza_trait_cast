@@ -5,19 +5,6 @@ pub(crate) unsafe fn generic_transmute<T, U>(t: T) -> U {
     let t = core::mem::ManuallyDrop::new(t);
     core::mem::transmute_copy(&t)
 }
-pub  const  fn is_trait_generic<T: ?Sized>() -> bool {
-
-    let splitted_at = type_name::<T>().split_at_checked(4);
-    match splitted_at {
-        None => {
-            false
-        }
-        Some(splitted_at) => {
-            return  comptime_str_eq(splitted_at.0, "dyn ") && size_of::<&T>() == size_of::<&dyn Any>();
-        }
-    }
-
-}
 pub const fn comptime_str_eq(a: &str, b: &str) -> bool {
 
     if a.len() != b.len() {
