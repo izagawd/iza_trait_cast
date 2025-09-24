@@ -52,7 +52,7 @@ impl<TraitReg: TraitVTableRegisterer> TraitVTableRegistry<TraitReg> {
             registered_traits: &mut self.registered_traits,
             type_vtable_mapper: type_registration
         };
-        self.registerer.register_trait_vtables_for_type::<T>(&mut helper);
+        self.registerer.register_trait_vtables_for_type(&mut helper);
 
     }
     #[inline]
@@ -78,7 +78,7 @@ impl<TraitReg: TraitVTableRegisterer> TraitVTableRegistry<TraitReg> {
 /// trait Other : Any{}
 ///
 /// impl TraitVTableRegisterer for MyRegisterer{
-///     fn register_trait_vtables_for_type<T: Any>(&self, registerer_helper: &mut RegistererHelper<T>) {
+///     fn register_trait_vtables_for_type(&self, registerer_helper: &mut RegistererHelper<impl Any>) {
 ///         registerer_helper.register_trait_for_type::<dyn Other>();
 ///        // now if type T implements dyn Other, it will be able to be casted to it
 ///        // even when the compiler does not know the concrete type of the object
@@ -108,7 +108,7 @@ impl<TraitReg: TraitVTableRegisterer> TraitVTableRegistry<TraitReg> {
 /// trait Other : Any{}
 ///
 /// impl TraitVTableRegisterer for MyRegisterer{
-///     fn register_trait_vtables_for_type<T: Any>(&self, registerer_helper: &mut RegistererHelper<T>) {
+///     fn register_trait_vtables_for_type(&self, registerer_helper: &mut RegistererHelper<impl Any>) {
 ///         registerer_helper.register_trait_for_type::<dyn Other>();
 ///        // now if type T implements dyn Other, it will be able to be casted to it
 ///        // even when the compiler does not know the concrete type of the object
@@ -129,14 +129,14 @@ pub trait TraitVTableRegisterer {
     /// trait Other : Any{}
     ///
     /// impl TraitVTableRegisterer for MyRegisterer{
-    ///     fn register_trait_vtables_for_type<T: Any>(&self, registerer_helper: &mut RegistererHelper<T>) {
+    ///     fn register_trait_vtables_for_type(&self, registerer_helper: &mut RegistererHelper<impl Any>) {
     ///         registerer_helper.register_trait_for_type::<dyn Other>();
     ///        // now if type T implements dyn Other, it will be able to be casted to it
     ///        // even when the compiler does not know the concrete type of the object
     ///    }
     /// }
     /// ```
-    fn register_trait_vtables_for_type<T: Any>(&self, registerer_helper: &mut RegistererHelper<T>){
+    fn register_trait_vtables_for_type(&self, registerer_helper: &mut RegistererHelper<impl Any>){
 
     }
 }

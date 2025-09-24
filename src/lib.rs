@@ -56,7 +56,7 @@ use std::any;
     #[derive(Default)]
     struct TestRegisterer;
     impl TraitVTableRegisterer for TestRegisterer {
-        fn register_trait_vtables_for_type<T: Any>(&self, registry: &mut RegistererHelper<T>) {
+        fn register_trait_vtables_for_type(&self, registry: &mut RegistererHelper<impl Any>) {
             registry.register_trait_for_type::<dyn Base>();
             registry.register_trait_for_type::<dyn Child>();
         }
@@ -156,7 +156,7 @@ use std::any;
         #[derive(Default)]
         struct EmptyRegisterer;
         impl TraitVTableRegisterer for EmptyRegisterer {
-            fn register_trait_vtables_for_type<T: Any>(&self, registry: &mut RegistererHelper<T>) {
+            fn register_trait_vtables_for_type(&self, registry: &mut RegistererHelper<impl Any>) {
                 // Intentionally do nothing.
             }
         }
