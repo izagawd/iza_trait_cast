@@ -141,7 +141,7 @@ pub trait TraitVTableRegisterer {
     }
 }
 
-pub enum VTableError{
+pub enum CastError {
     TraitNotImplemented{
         trait_name: &'static str,
         trait_id: TypeId,
@@ -159,7 +159,7 @@ pub enum VTableError{
     }
 
 }
-impl Debug for VTableError{
+impl Debug for CastError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::TraitNotImplemented{trait_name, type_name,.. } => {
@@ -184,7 +184,7 @@ impl<T: Any> Castable for T{
     }
 }
 /// Gets the vtable
-pub(crate) fn get_vtable<TCastTo: ?Sized + 'static + Pointee<Metadata=DynMetadata<TCastTo>>>(obj: &(impl Castable + ?Sized),  type_registry: &TraitVTableRegistry<impl TraitVTableRegisterer>) -> Result<&'static (), VTableError>{
+pub(crate) fn get_vtable<TCastTo: ?Sized + 'static + Pointee<Metadata=DynMetadata<TCastTo>>>(obj: &(impl Castable + ?Sized),  type_registry: &TraitVTableRegistry<impl TraitVTableRegisterer>) -> Result<&'static (), CastError>{
     let obj_type_id = obj.type_id();
     let type_registration_maybe =type_registry.trait_registration_mapper.get(&obj_type_id);
     match type_registration_maybe{
@@ -192,9 +192,9 @@ pub(crate) fn get_vtable<TCastTo: ?Sized + 'static + Pointee<Metadata=DynMetadat
             match type_registration.vtables.get(&TypeId::of::<TCastTo>()) {
                 None => {
                     if type_registry.is_trait_registered(&TypeId::of::<TCastTo>()) {
-                        Err(VTableError::TraitNotImplemented {trait_name: type_name::<TCastTo>(), trait_id: TypeId::of::<TCastTo>(), type_id: obj_type_id, type_name: obj.type_name()})
+                        Err(CastError::TraitNotImplemented {trait_name: type_name::<TCastTo>(), trait_id: TypeId::of::<TCastTo>(), type_id: obj_type_id, type_name: obj.type_name()})
                     } else{
-                        Err(VTableError::TraitNotRegistered{trait_name: type_name::<TCastTo>(), trait_id: TypeId::of::<TCastTo>()})
+                        Err(CastError::TraitNotRegistered{trait_name: type_name::<TCastTo>(), trait_id: TypeId::of::<TCastTo>()})
                     }
                 }
                 Some(gotten) => {
@@ -203,7 +203,7 @@ pub(crate) fn get_vtable<TCastTo: ?Sized + 'static + Pointee<Metadata=DynMetadat
             }
         }
         None => {
-            Err(VTableError::TypeNotRegistered {type_id: obj_type_id, type_name: obj.type_name()})
+            Err(CastError::TypeNotRegistered {type_id: obj_type_id, type_name: obj.type_name()})
         }
     }
 

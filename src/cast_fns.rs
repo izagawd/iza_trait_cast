@@ -1,5 +1,5 @@
 use crate::handy_functions::generic_transmute;
-use crate::trait_registry::{get_vtable, Castable, TraitVTableRegisterer, TraitVTableRegistry, VTableError};
+use crate::trait_registry::{get_vtable, Castable, TraitVTableRegisterer, TraitVTableRegistry, CastError};
 use std::ptr::{DynMetadata, Pointee};
 
 // macro, to avoid repeating code
@@ -32,12 +32,12 @@ macro_rules! cast_reference {
 
 
 
-pub fn cast_ref<'a,TTo: ?Sized + 'static + Pointee<Metadata=DynMetadata<TTo>>>(from: &dyn Castable, reg: &TraitVTableRegistry<impl TraitVTableRegisterer>) -> Result<&'a TTo, VTableError> {
+pub fn cast_ref<'a,TTo: ?Sized + 'static + Pointee<Metadata=DynMetadata<TTo>>>(from: &dyn Castable, reg: &TraitVTableRegistry<impl TraitVTableRegisterer>) -> Result<&'a TTo, CastError> {
     cast_reference!(TTo,from,reg)
 }
 
 
-pub fn cast_mut<'a,TTo: ?Sized + 'static + Pointee<Metadata=DynMetadata<TTo>>>(from: &mut dyn  Castable, reg: &TraitVTableRegistry<impl TraitVTableRegisterer>) -> Result<&'a mut TTo, VTableError> {
+pub fn cast_mut<'a,TTo: ?Sized + 'static + Pointee<Metadata=DynMetadata<TTo>>>(from: &mut dyn  Castable, reg: &TraitVTableRegistry<impl TraitVTableRegisterer>) -> Result<&'a mut TTo, CastError> {
     cast_reference!(TTo,from,reg)
 }
 

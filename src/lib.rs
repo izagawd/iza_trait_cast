@@ -20,7 +20,7 @@ mod tests {
     use std::any::type_name;
 use std::any;
     use std::any::TypeId;
-    use crate::trait_registry::{RegistererHelper, VTableError};
+    use crate::trait_registry::{RegistererHelper, CastError};
     use super::*;
 
     // Define our test traits.
@@ -93,7 +93,7 @@ use std::any;
 
         let result = cast_fns::cast_ref::<dyn Child>(as_base, &vtable_holder);
         match result {
-            Err(VTableError::TypeNotRegistered { type_name, type_id}) => {
+            Err(CastError::TypeNotRegistered { type_name, type_id}) => {
                 assert_eq!(type_name,any::type_name::<TestStruct>(), "Incorrect type name");
                 assert_eq!(type_id, TypeId::of::<TestStruct>(), "Incorrect type id");
 
@@ -112,7 +112,7 @@ use std::any;
 
         let result = cast_fns::cast_ref::<dyn Child>(as_base, &vtable_holder);
         match result {
-            Err(VTableError::TraitNotImplemented { trait_name, trait_id: trait_type_id, type_name, type_id }) => {
+            Err(CastError::TraitNotImplemented { trait_name, trait_id: trait_type_id, type_name, type_id }) => {
                 assert_eq!(type_name,any::type_name::<BaseOnly>(), "Incorrect type name");
                 assert_eq!(type_id, TypeId::of::<BaseOnly>(), "Incorrect type id");
                 assert_eq!(any::type_name::<dyn Child>(), trait_name, "Invalid trait name");
@@ -169,7 +169,7 @@ use std::any;
         // Attempt to cast to UnregisteredTrait, expecting an error.
         let result = cast_fns::cast_ref::<dyn UnregisteredTrait>(as_trait, &registry);
         match result {
-            Err(VTableError::TraitNotRegistered { trait_name, trait_id: trait_type_id }) => {
+            Err(CastError::TraitNotRegistered { trait_name, trait_id: trait_type_id }) => {
                 assert_eq!(trait_name, type_name::<dyn UnregisteredTrait>(), "Error: Trait name did not match");
                 assert_eq!(trait_type_id, TypeId::of::<dyn UnregisteredTrait>(), "Error: trait type  did not match");
             },
