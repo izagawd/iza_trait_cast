@@ -79,7 +79,7 @@ impl<TraitReg: TraitVTableRegisterer> TraitVTableRegistry<TraitReg> {
 ///
 /// impl TraitVTableRegisterer for MyRegisterer{
 ///     fn register_trait_vtables_for_type(&self, registerer_helper: &mut RegistererHelper<impl Any>) {
-///         registerer_helper.register_trait_for_type::<dyn Other>();
+///         registerer_helper.register_trait_vtables::<dyn Other>();
 ///        // now if type T implements dyn Other, it will be able to be casted to it
 ///        // even when the compiler does not know the concrete type of the object
 ///    }
@@ -109,7 +109,7 @@ impl<TraitReg: TraitVTableRegisterer> TraitVTableRegistry<TraitReg> {
 ///
 /// impl TraitVTableRegisterer for MyRegisterer{
 ///     fn register_trait_vtables_for_type(&self, registerer_helper: &mut RegistererHelper<impl Any>) {
-///         registerer_helper.register_trait_for_type::<dyn Other>();
+///         registerer_helper.register_trait_vtables::<dyn Other>();
 ///        // now if type T implements dyn Other, it will be able to be casted to it
 ///        // even when the compiler does not know the concrete type of the object
 ///    }
@@ -130,7 +130,7 @@ pub trait TraitVTableRegisterer {
     ///
     /// impl TraitVTableRegisterer for MyRegisterer{
     ///     fn register_trait_vtables_for_type(&self, registerer_helper: &mut RegistererHelper<impl Any>) {
-    ///         registerer_helper.register_trait_for_type::<dyn Other>();
+    ///         registerer_helper.register_trait_vtables::<dyn Other>();
     ///        // now if type T implements dyn Other, it will be able to be casted to it
     ///        // even when the compiler does not know the concrete type of the object
     ///    }
@@ -217,7 +217,7 @@ pub struct RegistererHelper<'a,T: 'static> {
 
 impl<'a,Type: 'static> RegistererHelper<'a,Type>{
 
-    pub fn register_trait_for_type<Trait: ?Sized + Pointee<Metadata=DynMetadata<Trait>> + 'static>(
+    pub fn register_trait_vtables<Trait: ?Sized + Pointee<Metadata=DynMetadata<Trait>> + 'static>(
          &mut self){
         struct AsDyn<Type: 'static> {
             kk: PhantomData<fn() -> Type>,

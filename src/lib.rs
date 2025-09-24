@@ -57,8 +57,8 @@ use std::any;
     struct TestRegisterer;
     impl TraitVTableRegisterer for TestRegisterer {
         fn register_trait_vtables_for_type(&self, registry: &mut RegistererHelper<impl Any>) {
-            registry.register_trait_for_type::<dyn Base>();
-            registry.register_trait_for_type::<dyn Child>();
+            registry.register_trait_vtables::<dyn Base>();
+            registry.register_trait_vtables::<dyn Child>();
         }
     }
 
