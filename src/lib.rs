@@ -32,23 +32,43 @@ use std::any;
     }
 
     // Test type that implements both Base and Child.
-    struct TestStruct;
+    struct TestStruct{
+        favorite_food: &'static str,
+        name: &'static str,
+    }
     impl Base for TestStruct {
         fn name(&self) -> &'static str {
-            "TestStruct"
+            self.name
         }
     }
     impl Child for TestStruct {
         fn favorite_food(&self) -> &'static str {
-            "Chicken"
+            self.favorite_food
+        }
+    }
+    impl TestStruct{
+        fn new() -> Self{
+            TestStruct{
+                favorite_food: "Chicken",
+                name: "TestStruct"
+            }
+        }
+    }
+    // Test type that implements only Base.
+    struct BaseOnly{
+        name: &'static str,
+    }
+    impl Base for BaseOnly {
+        fn name(&self) -> &'static str {
+            self.name
         }
     }
 
-    // Test type that implements only Base.
-    struct BaseOnly;
-    impl Base for BaseOnly {
-        fn name(&self) -> &'static str {
-            "BaseOnly"
+    impl BaseOnly{
+        fn new() -> Self{
+            Self{
+                name: "BaseOnly"
+            }
         }
     }
     // Note: BaseOnly does NOT implement Child.
@@ -65,7 +85,7 @@ use std::any;
     // Test that a valid cast returns correct results.
     #[test]
     fn vtable_validity_test() {
-        let as_base: &dyn Base = &TestStruct;
+        let as_base: &dyn Base = &TestStruct::new();
         let mut vtable_holder = TraitVTableRegistry::<TestRegisterer>::default();
         vtable_holder.register_type::<TestStruct>();
 
@@ -87,7 +107,7 @@ use std::any;
     // Test that casting without registering the type returns a TypeNotRegistered error.
     #[test]
     fn unregistered_type_error_test() {
-        let as_base: &dyn Base = &TestStruct;
+        let as_base: &dyn Base = &TestStruct::new();
         // Note: We do not call register_type::<TestStruct>()
         let vtable_holder = TraitVTableRegistry::<TestRegisterer>::default();
 
@@ -106,7 +126,7 @@ use std::any;
     // Test that casting to a trait that the type does not implement returns a TraitNotImplemented error.
     #[test]
     fn trait_not_implemented_error_test() {
-        let as_base: &dyn Base = &BaseOnly;
+        let as_base: &dyn Base = &BaseOnly::new();
         let mut vtable_holder = TraitVTableRegistry::<TestRegisterer>::default();
         vtable_holder.register_type::<BaseOnly>();
 
@@ -125,7 +145,7 @@ use std::any;
     //  Testing the mutable casting functionality.
     #[test]
     fn mutable_cast_validity_test() {
-        let mut test_instance = TestStruct;
+        let mut test_instance = TestStruct::new();
         let as_base: &mut dyn Base = &mut test_instance;
         let mut vtable_holder = TraitVTableRegistry::<TestRegisterer>::default();
         vtable_holder.register_type::<TestStruct>();
