@@ -226,13 +226,13 @@ impl<'a,Type: 'static> RegistererHelper<'a,Type>{
             type ToReg : Sized;
             fn register(registry: &mut RegistererHelper<Self::ToReg>);
         }
-        impl<Trait: ?Sized + Pointee<Metadata=DynMetadata<Trait>>, Type: 'static> AsDynImpl<Trait> for AsDyn<Type> {
+        impl<Trait: ?Sized + Pointee<Metadata=DynMetadata<Trait>> + 'static, Type: 'static> AsDynImpl<Trait> for AsDyn<Type> {
             type ToReg = Type;
             default fn register(registry: &mut RegistererHelper<'_, <AsDyn<Type> as AsDynImpl<Trait>>::ToReg>){
 
             }
         }
-        impl<Type: Unsize<Trait>,Trait: ?Sized + Pointee<Metadata=DynMetadata<Trait>> + 'static> AsDynImpl<Trait> for AsDyn<Type> {
+        impl<Type: Unsize<Trait> + 'static,Trait: ?Sized + Pointee<Metadata=DynMetadata<Trait>> + 'static> AsDynImpl<Trait> for AsDyn<Type> {
             fn register(registry: &mut RegistererHelper<Type>) {
                 registry.type_vtable_mapper.register_vtable::<Trait,Type>()
 
