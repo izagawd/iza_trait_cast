@@ -2,22 +2,21 @@
 #![feature(specialization)]
 #![feature(ptr_metadata)]
 #![feature(unsize)]
+#![feature(const_trait_impl)]
+
 pub mod trait_registry;
 mod handy_functions;
 pub mod cast_fns;
 
 
-use crate::trait_registry::{Castable, TypeVTableMapper};
-
-
-use crate::trait_registry::{TraitVTableRegistry};
+use crate::trait_registry::{Castable};
 use std::any::Any;
 #[cfg(test)]
 mod tests {
     use std::any::type_name;
 use std::any;
     use std::any::TypeId;
-    use crate::trait_registry::{RegistererHelper, CastError};
+    use crate::trait_registry::{ CastError};
     use super::*;
 
     // Define our test traits.
@@ -71,21 +70,20 @@ use std::any;
     // Note: BaseOnly does NOT implement Child.
 
 
+    register_types!{
+        implementors: [TestStruct],
 
-    fn test_registerer<T: 'static>( registry: &mut RegistererHelper<T>){
-        registry.register_trait_vtables::<dyn Base>();
-        registry.register_trait_vtables::<dyn Child>();
+        traits: [Base, Child]
     }
-
     // Test that a valid cast returns correct results.
     #[test]
     fn vtable_validity_test() {
         let as_base: &dyn Base = &TestStruct::new();
-        let mut vtable_holder = TraitVTableRegistry::default();
 
-        vtable_holder.register_type::<TestStruct>(&[test_registerer]);
 
-        if let Ok(casted) = cast_fns::cast_ref::<dyn Child>(as_base, &vtable_holder) {
+
+
+        if let Ok(casted) = cast_fns::cast_ref::<dyn Child>(as_base) {
             assert_eq!(casted.favorite_food(), "Chicken", "incorrect vtable was generated");
             let as_base: &dyn Base = casted;
             assert_eq!(as_base.name(), "TestStruct", "incorrect vtable was generated");
@@ -93,40 +91,43 @@ use std::any;
             panic!("Casting failed despite registering the vtable for dyn Child");
         }
     }
-    #[test]
-    fn registered_type_checker(){
-        let mut vtable_holder = TraitVTableRegistry::default();
-        vtable_holder.register_type::<TestStruct>(&[test_registerer]);
-        assert!(vtable_holder.is_type_registered(&TypeId::of::<TestStruct>()),"Type not properly registered, or method that checks if a type is registered is not working correctly");
-        assert!(!vtable_holder.is_type_registered(&TypeId::of::<i32>()),"Says the type i32 is registered, despitemthe fact that it is not");
+
+    struct UnregisteredType;
+
+    impl Base for UnregisteredType{
+        fn name(&self) -> &'static str {
+            "UnregisteredType"
+        }
     }
-    // Test that casting without registering the type returns a TypeNotRegistered error.
+
+    // Test that casting without registering the type returns a NotRegistered error.
     #[test]
     fn unregistered_type_error_test() {
-        let as_base: &dyn Base = &TestStruct::new();
-        // Note: We do not call register_type::<TestStruct>()
-        let vtable_holder = TraitVTableRegistry::default();
+        let as_base: &dyn Base = &UnregisteredType;
 
-        let result = cast_fns::cast_ref::<dyn Child>(as_base, &vtable_holder);
+
+        let result = cast_fns::cast_ref::<dyn Child>(as_base);
         match result {
-            Err(CastError::TypeNotRegistered { type_name, type_id}) => {
-                assert_eq!(type_name,any::type_name::<TestStruct>(), "Incorrect type name");
-                assert_eq!(type_id, TypeId::of::<TestStruct>(), "Incorrect type id");
+            Err(CastError::NotRegistered { type_name, type_id, ..}) => {
+                assert_eq!(type_name,any::type_name::<UnregisteredType>(), "Incorrect type name");
+                assert_eq!(type_id, TypeId::of::<UnregisteredType>(), "Incorrect type id");
 
             }
             _ => assert!(false, "Did not return valid enum variant"),
         }
     }
-
+    register_types!{
+        implementors: [BaseOnly],
+        traits: [Child]
+    }
 
     // Test that casting to a trait that the type does not implement returns a TraitNotImplemented error.
     #[test]
     fn trait_not_implemented_error_test() {
         let as_base: &dyn Base = &BaseOnly::new();
-        let mut vtable_holder = TraitVTableRegistry::default();
-        vtable_holder.register_type::<BaseOnly>(&[test_registerer]);
 
-        let result = cast_fns::cast_ref::<dyn Child>(as_base, &vtable_holder);
+
+        let result = cast_fns::cast_ref::<dyn Child>(as_base);
         match result {
             Err(CastError::TraitNotImplemented { trait_name, trait_id: trait_type_id, type_name, type_id }) => {
                 assert_eq!(type_name,any::type_name::<BaseOnly>(), "Incorrect type name");
@@ -143,10 +144,8 @@ use std::any;
     fn mutable_cast_validity_test() {
         let mut test_instance = TestStruct::new();
         let as_base: &mut dyn Base = &mut test_instance;
-        let mut vtable_holder = TraitVTableRegistry::default();
-        vtable_holder.register_type::<TestStruct>(&[test_registerer]);
 
-        let result = cast_fns::cast_mut::<dyn Child>(as_base, &vtable_holder);
+        let result = cast_fns::cast_mut::<dyn Child>(as_base);
         match result {
             Ok(child) => {
                 assert_eq!(child.favorite_food(), "Chicken", "Mutable cast did not produce correct behavior");
@@ -161,28 +160,30 @@ use std::any;
             fn do_something(&self) -> &'static str;
         }
         // A type that implements UnregisteredTrait.
-        struct UnregisteredStruct;
-        impl UnregisteredTrait for UnregisteredStruct {
+        struct RegisteredStruct;
+        impl UnregisteredTrait for RegisteredStruct {
             fn do_something(&self) -> &'static str {
                 "nothing"
             }
         }
+        register_types!(
 
-
-        fn empty_registerer<T>(registerer: &mut RegistererHelper<T>){}
+            implementors: [RegisteredStruct],
+            traits: []
+        );
         // Create an instance and a registry using our EmptyRegisterer.
-        let as_trait: &dyn UnregisteredTrait = &UnregisteredStruct;
-        let mut registry = TraitVTableRegistry::default();
-        registry.register_type::<UnregisteredStruct>(&[empty_registerer]);
+        let as_trait: &dyn UnregisteredTrait = &RegisteredStruct;
+
 
         // Attempt to cast to UnregisteredTrait, expecting an error.
-        let result = cast_fns::cast_ref::<dyn UnregisteredTrait>(as_trait, &registry);
+        let result = cast_fns::cast_ref::<dyn UnregisteredTrait>(as_trait);
         match result {
-            Err(CastError::TraitNotRegistered { trait_name, trait_id: trait_type_id }) => {
+            Err(CastError::NotRegistered { trait_name, trait_id: trait_type_id, .. }) => {
                 assert_eq!(trait_name, type_name::<dyn UnregisteredTrait>(), "Error: Trait name did not match");
                 assert_eq!(trait_type_id, TypeId::of::<dyn UnregisteredTrait>(), "Error: trait type  did not match");
             },
-            _ => panic!("Expected a TraitNotRegistered error because the trait was not registered"),
+
+            _ => panic!("Expected a NotRegistered error because the trait was not registered"),
         }
     }
 }
