@@ -27,7 +27,7 @@ macro_rules! cast_reference {
 
 
 
-pub fn cast_ref<'a,TTo: ?Sized + 'static + Pointee<Metadata=DynMetadata<TTo>>>(from: &dyn Castable) -> Result<&'a TTo, CastError> {
+pub fn trait_cross_cast_ref<'a,TTo: ?Sized + 'static + Pointee<Metadata=DynMetadata<TTo>>>(from: &dyn Castable) -> Result<&'a TTo, CastError> {
     unsafe {
         let vtable = get_vtable::<TTo>(from);
         match vtable {
@@ -43,7 +43,7 @@ pub fn cast_ref<'a,TTo: ?Sized + 'static + Pointee<Metadata=DynMetadata<TTo>>>(f
 }
 
 
-pub fn cast_mut<'a,TTo: ?Sized + 'static + Pointee<Metadata=DynMetadata<TTo>>>(from: &mut dyn  Castable) -> Result<&'a mut TTo, CastError> {
+pub fn trait_cross_cast_mut<'a,TTo: ?Sized + 'static + Pointee<Metadata=DynMetadata<TTo>>>(from: &mut dyn  Castable) -> Result<&'a mut TTo, CastError> {
     unsafe {
         let vtable = get_vtable::<TTo>(from);
         match vtable {

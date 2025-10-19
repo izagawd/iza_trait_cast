@@ -83,7 +83,7 @@ use std::any;
 
 
 
-        if let Ok(casted) = cast_fns::cast_ref::<dyn Child>(as_base) {
+        if let Ok(casted) = cast_fns::trait_cross_cast_ref::<dyn Child>(as_base) {
             assert_eq!(casted.favorite_food(), "Chicken", "incorrect vtable was generated");
             let as_base: &dyn Base = casted;
             assert_eq!(as_base.name(), "TestStruct", "incorrect vtable was generated");
@@ -106,7 +106,7 @@ use std::any;
         let as_base: &dyn Base = &UnregisteredType;
 
 
-        let result = cast_fns::cast_ref::<dyn Child>(as_base);
+        let result = cast_fns::trait_cross_cast_ref::<dyn Child>(as_base);
         match result {
             Err(CastError::CombinationNotRegistered { type_name, type_id, ..}) => {
                 assert_eq!(type_name,any::type_name::<UnregisteredType>(), "Incorrect type name");
@@ -127,7 +127,7 @@ use std::any;
         let as_base: &dyn Base = &BaseOnly::new();
 
 
-        let result = cast_fns::cast_ref::<dyn Child>(as_base);
+        let result = cast_fns::trait_cross_cast_ref::<dyn Child>(as_base);
         match result {
             Err(CastError::TraitNotImplemented { trait_name, trait_id: trait_type_id, type_name, type_id }) => {
                 assert_eq!(type_name,any::type_name::<BaseOnly>(), "Incorrect type name");
@@ -145,7 +145,7 @@ use std::any;
         let mut test_instance = TestStruct::new();
         let as_base: &mut dyn Base = &mut test_instance;
 
-        let result = cast_fns::cast_mut::<dyn Child>(as_base);
+        let result = cast_fns::trait_cross_cast_mut::<dyn Child>(as_base);
         match result {
             Ok(child) => {
                 assert_eq!(child.favorite_food(), "Chicken", "Mutable cast did not produce correct behavior");
@@ -178,7 +178,7 @@ use std::any;
 
 
         // Attempt to cast to UnregisteredTrait, expecting an error.
-        let result = cast_fns::cast_ref::<dyn UnregisteredTrait>(as_trait);
+        let result = cast_fns::trait_cross_cast_ref::<dyn UnregisteredTrait>(as_trait);
         match result {
             Err(CastError::CombinationNotRegistered { trait_name, trait_id: trait_type_id, .. }) => {
                 assert_eq!(trait_name, type_name::<dyn UnregisteredTrait>(), "Error: Trait name did not match");
