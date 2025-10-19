@@ -1,3 +1,4 @@
+use std::ptr;
 use crate::handy_functions::generic_transmute;
 use crate::trait_registry::{get_vtable, Castable, TraitVTableRegisterer, TraitVTableRegistry, CastError};
 use std::ptr::{DynMetadata, Pointee};
@@ -6,38 +7,54 @@ use std::ptr::{DynMetadata, Pointee};
 macro_rules! cast_reference {
     ($TTo:ty, $from:expr,  $reg:expr) => {
         {
-            let vtable =  get_vtable::<$TTo>($from,$reg);
-            match vtable {
-                Ok(vtable) => {
-                    let mut to_v : (& (), &'static ()) =
-
-                    unsafe {
-                        // as_Any exists, to convert it into a &dyn T
-                        // to better modify the vtable.
-                        generic_transmute($from)
-                    };
-
-                    to_v.1 = vtable;
-                    Ok(unsafe{generic_transmute(
-                        to_v
-                    )}) 
-                }
-                Err(err) => {
-                    Err(err)
+            unsafe{
+                let vtable =  get_vtable::<$TTo>($from,$reg);
+                match vtable {
+                    Ok(vtable) => {
+                        let gotten : *const $TTo = ptr::from_raw_parts(ptr::addr_of!($from),generic_transmute(vtable));
+                        Ok(&*gotten)
+                    }
+                    Err(err) => {
+                        Err(err)
+                    }
                 }
             }
+
         }
     };
 }
 
 
 
+
 pub fn cast_ref<'a,TTo: ?Sized + 'static + Pointee<Metadata=DynMetadata<TTo>>>(from: &dyn Castable, reg: &TraitVTableRegistry<impl TraitVTableRegisterer>) -> Result<&'a TTo, CastError> {
-    cast_reference!(TTo,from,reg)
+    unsafe {
+        let vtable = get_vtable::<TTo>(from, reg);
+        match vtable {
+            Ok(vtable) => {
+                let gotten: *const TTo = ptr::from_raw_parts(from as *const dyn Castable as *const (), generic_transmute(vtable));
+                Ok(&*gotten)
+            }
+            Err(err) => {
+                Err(err)
+            }
+        }
+    }
 }
 
 
 pub fn cast_mut<'a,TTo: ?Sized + 'static + Pointee<Metadata=DynMetadata<TTo>>>(from: &mut dyn  Castable, reg: &TraitVTableRegistry<impl TraitVTableRegisterer>) -> Result<&'a mut TTo, CastError> {
-    cast_reference!(TTo,from,reg)
+    unsafe {
+        let vtable = get_vtable::<TTo>(from, reg);
+        match vtable {
+            Ok(vtable) => {
+                let gotten: *mut TTo = ptr::from_raw_parts_mut(from as *mut dyn Castable as *mut (), generic_transmute(vtable));
+                Ok(&mut *gotten)
+            }
+            Err(err) => {
+                Err(err)
+            }
+        }
+    }
 }
 
