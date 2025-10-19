@@ -16,6 +16,9 @@ mod tests {
     use std::any::type_name;
 use std::any;
     use std::any::TypeId;
+    use std::rc::Rc;
+    use std::sync::Arc;
+    use crate::cast_fns::{trait_cross_cast_arc, trait_cross_cast_box, trait_cross_cast_rc, CastErrorWith};
     use crate::trait_registry::{ CastError};
     use super::*;
 
@@ -74,6 +77,170 @@ use std::any;
         implementors: [TestStruct],
 
         traits: [Base, Child]
+    }
+    // --- Rc versions --------------------------------------------------------
+
+    #[test]
+    fn rc_cross_cast_success_keeps_allocation_and_vtable() {
+        let rc_base: Rc<dyn Base> = Rc::new(TestStruct::new());
+
+        // Save the data pointer before the cast to ensure it's the same after.
+        let raw_before: *const dyn Base = Rc::as_ptr(&rc_base);
+        let (data_before, _) = raw_before.to_raw_parts();
+
+        match trait_cross_cast_rc::<dyn Child,_,_>(rc_base) {
+            Ok(rc_child) => {
+                assert_eq!(rc_child.favorite_food(), "Chicken");
+                let as_base: &dyn Base = &*rc_child;
+                assert_eq!(as_base.name(), "TestStruct");
+
+                let raw_after: *const dyn Child = Rc::as_ptr(&rc_child);
+                let (data_after, _) = raw_after.to_raw_parts();
+                assert_eq!(data_before, data_after, "cross-cast should not move the allocation");
+            }
+            Err(e) => panic!("Rc cross-cast failed: {e:?}"),
+        }
+    }
+
+    #[test]
+    fn rc_cross_cast_trait_not_implemented_returns_original() {
+        let rc_base: Rc<dyn Base> = Rc::new(BaseOnly::new());
+
+        match trait_cross_cast_rc::<dyn Child,_,_>(rc_base) {
+            Err(CastErrorWith { error: CastError::TraitNotImplemented { trait_name, trait_id, type_name, type_id }, with }) => {
+                assert_eq!(type_name, std::any::type_name::<BaseOnly>());
+                assert_eq!(type_id, TypeId::of::<BaseOnly>());
+                assert_eq!(trait_name, std::any::type_name::<dyn Child>());
+                assert_eq!(trait_id, TypeId::of::<dyn Child>());
+                // got the original Rc back; it should still be usable
+                assert_eq!(with.name(), "BaseOnly");
+                assert_eq!(Rc::strong_count(&with), 1);
+            }
+            other => panic!("Expected TraitNotImplemented"),
+        }
+    }
+
+    #[test]
+    fn rc_cross_cast_unregistered_type_returns_original() {
+        let rc_base: Rc<dyn Base> = Rc::new(UnregisteredType);
+
+        match trait_cross_cast_rc::<dyn Child,_,_>(rc_base) {
+            Err(CastErrorWith { error: CastError::CombinationNotRegistered { type_name, type_id, .. }, with }) => {
+                assert_eq!(type_name, std::any::type_name::<UnregisteredType>());
+                assert_eq!(type_id, TypeId::of::<UnregisteredType>());
+                assert_eq!(with.name(), "UnregisteredType");
+                assert_eq!(Rc::strong_count(&with), 1);
+            }
+            other => panic!("Expected CombinationNotRegistered"),
+        }
+    }
+
+    // --- Arc versions -------------------------------------------------------
+
+    #[test]
+    fn arc_cross_cast_success_keeps_allocation_and_vtable() {
+        let arc_base: Arc<dyn Base> = Arc::new(TestStruct::new());
+
+        let raw_before: *const dyn Base = Arc::as_ptr(&arc_base);
+        let (data_before, _) = raw_before.to_raw_parts();
+
+        match trait_cross_cast_arc::<dyn Child,_,_>(arc_base) {
+            Ok(arc_child) => {
+                assert_eq!(arc_child.favorite_food(), "Chicken");
+                let as_base: &dyn Base = &*arc_child;
+                assert_eq!(as_base.name(), "TestStruct");
+
+                let raw_after: *const dyn Child = Arc::as_ptr(&arc_child);
+                let (data_after, _) = raw_after.to_raw_parts();
+                assert_eq!(data_before, data_after, "cross-cast should not move the allocation");
+            }
+            Err(e) => panic!("Arc cross-cast failed: {e:?}"),
+        }
+    }
+
+    #[test]
+    fn arc_cross_cast_trait_not_implemented_returns_original() {
+        let arc_base: Arc<dyn Base> = Arc::new(BaseOnly::new());
+
+        match trait_cross_cast_arc::<dyn Child,_,_>(arc_base) {
+            Err(CastErrorWith { error: CastError::TraitNotImplemented { trait_name, trait_id, type_name, type_id }, with }) => {
+                assert_eq!(type_name, std::any::type_name::<BaseOnly>());
+                assert_eq!(type_id, TypeId::of::<BaseOnly>());
+                assert_eq!(trait_name, std::any::type_name::<dyn Child>());
+                assert_eq!(trait_id, TypeId::of::<dyn Child>());
+                assert_eq!(with.name(), "BaseOnly");
+                assert_eq!(Arc::strong_count(&with), 1);
+            }
+            other => panic!("Expected TraitNotImplemented"),
+        }
+    }
+
+    #[test]
+    fn arc_cross_cast_unregistered_type_returns_original() {
+        let arc_base: Arc<dyn Base> = Arc::new(UnregisteredType);
+
+        match trait_cross_cast_arc::<dyn Child,_,_>(arc_base) {
+            Err(CastErrorWith { error: CastError::CombinationNotRegistered { type_name, type_id, .. }, with }) => {
+                assert_eq!(type_name, std::any::type_name::<UnregisteredType>());
+                assert_eq!(type_id, TypeId::of::<UnregisteredType>());
+                assert_eq!(with.name(), "UnregisteredType");
+                assert_eq!(Arc::strong_count(&with), 1);
+            }
+            other => panic!("Expected CombinationNotRegistered"),
+        }
+    }
+
+    // --- Box versions -------------------------------------------------------
+
+    #[test]
+    fn box_cross_cast_success_keeps_allocation_and_vtable() {
+        let bx_base: Box<dyn Base> = Box::new(TestStruct::new());
+
+        let raw_before: *const dyn Base = &*bx_base;
+        let (data_before, _) = raw_before.to_raw_parts();
+
+        match trait_cross_cast_box::<dyn Child,_,_>(bx_base) {
+            Ok(bx_child) => {
+                assert_eq!(bx_child.favorite_food(), "Chicken");
+                let as_base: &dyn Base = &*bx_child;
+                assert_eq!(as_base.name(), "TestStruct");
+
+                let raw_after: *const dyn Child = &*bx_child;
+                let (data_after, _) = raw_after.to_raw_parts();
+                assert_eq!(data_before, data_after, "cross-cast should not move the allocation");
+            }
+            Err(e) => panic!("Box cross-cast failed: {e:?}"),
+        }
+    }
+
+    #[test]
+    fn box_cross_cast_trait_not_implemented_returns_original() {
+        let bx_base: Box<dyn Base> = Box::new(BaseOnly::new());
+
+        match trait_cross_cast_box::<dyn Child,_,_>(bx_base) {
+            Err(CastErrorWith { error: CastError::TraitNotImplemented { trait_name, trait_id, type_name, type_id }, with }) => {
+                assert_eq!(type_name, std::any::type_name::<BaseOnly>());
+                assert_eq!(type_id, TypeId::of::<BaseOnly>());
+                assert_eq!(trait_name, std::any::type_name::<dyn Child>());
+                assert_eq!(trait_id, TypeId::of::<dyn Child>());
+                assert_eq!(with.name(), "BaseOnly");
+            }
+            other => panic!("Expected TraitNotImplemented"),
+        }
+    }
+
+    #[test]
+    fn box_cross_cast_unregistered_type_returns_original() {
+        let bx_base: Box<dyn Base> = Box::new(UnregisteredType);
+
+        match trait_cross_cast_box::<dyn Child,_,_>(bx_base) {
+            Err(CastErrorWith { error: CastError::CombinationNotRegistered { type_name, type_id, .. }, with }) => {
+                assert_eq!(type_name, std::any::type_name::<UnregisteredType>());
+                assert_eq!(type_id, TypeId::of::<UnregisteredType>());
+                assert_eq!(with.name(), "UnregisteredType");
+            }
+            other => panic!("Expected CombinationNotRegistered,"),
+        }
     }
     // Test that a valid cast returns correct results.
     #[test]
