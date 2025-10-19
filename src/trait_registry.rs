@@ -39,7 +39,7 @@ impl TraitVTableRegistry {
 
 impl TraitVTableRegistry {
     /// Used to include a type for casting, so u can cast that type to another trait even when the compiler does not know the underlying type
-    pub fn register_type<T: Any>(&mut self,registerer_funcs:  impl IntoIterator<Item=impl FnOnce(&mut RegistererHelper<T>)>) {
+    pub fn register_type<'a,T: Any>(&mut self,registerer_funcs:  impl IntoIterator<Item=&'a (impl Fn(&mut RegistererHelper<T>) + 'a)>) {
         let type_id = TypeId::of::<T>();
         let mut type_registration = match self.trait_registration_mapper.entry(type_id) {
             Entry::Occupied(entry) => entry.into_mut(),
