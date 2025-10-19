@@ -85,10 +85,8 @@ type  TraitTypeId = TypeId;
 /// Gets the vtable
 pub(crate) fn get_vtable<TCastTo: ?Sized + 'static + Pointee<Metadata=DynMetadata<TCastTo>>>(obj: &(impl Castable + ?Sized)) -> Result<VTable, CastError>{
     let obj_type_id = obj.type_id();
-    let type_registration_maybe =VTABLE_REGISTRY.get(&obj_type_id);
-    for i in inventory::iter::<VTableMapInstance>() {
+    let type_registration_maybe = VTABLE_REGISTRY.get(&obj_type_id);
 
-    }
     match type_registration_maybe{
         Some(type_registration) => {
             match type_registration.get(&TypeId::of::<TCastTo>()) {
