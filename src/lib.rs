@@ -2,7 +2,6 @@
 #![feature(specialization)]
 #![feature(ptr_metadata)]
 #![feature(const_type_name)]
-#![feature(type_alias_impl_trait)]
 #![feature(unsize)]
 pub mod trait_registry;
 mod handy_functions;
