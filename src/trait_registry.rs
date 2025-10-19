@@ -19,7 +19,7 @@ pub enum CastError {
         type_name: &'static str,
         type_id: TypeId,
     },
-    NotRegistered{
+    CombinationNotRegistered {
         trait_name: &'static str,
         trait_id: TypeId,
         type_name: &'static str,
@@ -34,7 +34,7 @@ impl Debug for CastError {
             Self::TraitNotImplemented{trait_name, type_name,.. } => {
                 f.write_fmt(format_args!("trait '{trait_name}' not implemented by the underlying concrete type '{type_name}'"))
             },
-            Self::NotRegistered{trait_name, type_name,.. } => {
+            Self::CombinationNotRegistered{trait_name, type_name,.. } => {
                 f.write_fmt(format_args!("trait '{trait_name}' has not been registered to check if it is implemented by the underlying concrete type '{type_name}'"))
             },
         }
@@ -91,7 +91,7 @@ pub(crate) fn get_vtable<TCastTo: ?Sized + 'static + Pointee<Metadata=DynMetadat
         Some(type_registration) => {
             match type_registration.get(&TypeId::of::<TCastTo>()) {
                 None => {
-                    Err(CastError::NotRegistered{trait_name: type_name::<TCastTo>(), trait_id: TypeId::of::<TCastTo>(), type_name: obj.type_name(), type_id: obj_type_id })
+                    Err(CastError::CombinationNotRegistered{trait_name: type_name::<TCastTo>(), trait_id: TypeId::of::<TCastTo>(), type_name: obj.type_name(), type_id: obj_type_id })
                 }
                 Some(gotten) => {
                     match gotten {
@@ -105,7 +105,7 @@ pub(crate) fn get_vtable<TCastTo: ?Sized + 'static + Pointee<Metadata=DynMetadat
             }
         }
         None => {
-            Err(CastError::NotRegistered {trait_name: type_name::<TCastTo>(), trait_id: TypeId::of::<TCastTo>(), type_name: obj.type_name(), type_id: obj_type_id })
+            Err(CastError::CombinationNotRegistered {trait_name: type_name::<TCastTo>(), trait_id: TypeId::of::<TCastTo>(), type_name: obj.type_name(), type_id: obj_type_id })
         }
     }
 

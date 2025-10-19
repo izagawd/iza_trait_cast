@@ -100,7 +100,7 @@ use std::any;
         }
     }
 
-    // Test that casting without registering the type returns a NotRegistered error.
+    // Test that casting without registering the type returns a CombinationNotRegistered error.
     #[test]
     fn unregistered_type_error_test() {
         let as_base: &dyn Base = &UnregisteredType;
@@ -108,7 +108,7 @@ use std::any;
 
         let result = cast_fns::cast_ref::<dyn Child>(as_base);
         match result {
-            Err(CastError::NotRegistered { type_name, type_id, ..}) => {
+            Err(CastError::CombinationNotRegistered { type_name, type_id, ..}) => {
                 assert_eq!(type_name,any::type_name::<UnregisteredType>(), "Incorrect type name");
                 assert_eq!(type_id, TypeId::of::<UnregisteredType>(), "Incorrect type id");
 
@@ -154,7 +154,7 @@ use std::any;
         }
     }
 
-    // testing that it gives a NotRegistered error when checking if a type implements a trait, and that fact has not been registered
+    // testing that it gives a CombinationNotRegistered error when checking if a type implements a trait, and that fact has not been registered
     #[test]
     fn trait_not_registered_test() {
         // Define a trait that we will not register.
@@ -180,12 +180,12 @@ use std::any;
         // Attempt to cast to UnregisteredTrait, expecting an error.
         let result = cast_fns::cast_ref::<dyn UnregisteredTrait>(as_trait);
         match result {
-            Err(CastError::NotRegistered { trait_name, trait_id: trait_type_id, .. }) => {
+            Err(CastError::CombinationNotRegistered { trait_name, trait_id: trait_type_id, .. }) => {
                 assert_eq!(trait_name, type_name::<dyn UnregisteredTrait>(), "Error: Trait name did not match");
                 assert_eq!(trait_type_id, TypeId::of::<dyn UnregisteredTrait>(), "Error: trait type  did not match");
             },
 
-            _ => panic!("Expected a NotRegistered error because the trait was not registered"),
+            _ => panic!("Expected a CombinationNotRegistered error because the trait was not registered"),
         }
     }
 }
