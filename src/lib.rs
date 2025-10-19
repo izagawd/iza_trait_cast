@@ -1,7 +1,6 @@
 #![feature(allocator_api)]
 #![feature(specialization)]
 #![feature(ptr_metadata)]
-#![feature(allow_internal_unstable)]
 #![feature(const_type_name)]
 #![feature(type_alias_impl_trait)]
 #![feature(unsize)]
