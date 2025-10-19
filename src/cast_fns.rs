@@ -1,6 +1,6 @@
 use std::ptr;
 use crate::handy_functions::generic_transmute;
-use crate::trait_registry::{get_vtable, Castable, TraitVTableRegisterer, TraitVTableRegistry, CastError};
+use crate::trait_registry::{get_vtable, Castable,TraitVTableRegistry, CastError};
 use std::ptr::{DynMetadata, Pointee};
 
 // macro, to avoid repeating code
@@ -27,7 +27,7 @@ macro_rules! cast_reference {
 
 
 
-pub fn cast_ref<'a,TTo: ?Sized + 'static + Pointee<Metadata=DynMetadata<TTo>>>(from: &dyn Castable, reg: &TraitVTableRegistry<impl TraitVTableRegisterer>) -> Result<&'a TTo, CastError> {
+pub fn cast_ref<'a,TTo: ?Sized + 'static + Pointee<Metadata=DynMetadata<TTo>>>(from: &dyn Castable, reg: &TraitVTableRegistry) -> Result<&'a TTo, CastError> {
     unsafe {
         let vtable = get_vtable::<TTo>(from, reg);
         match vtable {
@@ -43,7 +43,7 @@ pub fn cast_ref<'a,TTo: ?Sized + 'static + Pointee<Metadata=DynMetadata<TTo>>>(f
 }
 
 
-pub fn cast_mut<'a,TTo: ?Sized + 'static + Pointee<Metadata=DynMetadata<TTo>>>(from: &mut dyn  Castable, reg: &TraitVTableRegistry<impl TraitVTableRegisterer>) -> Result<&'a mut TTo, CastError> {
+pub fn cast_mut<'a,TTo: ?Sized + 'static + Pointee<Metadata=DynMetadata<TTo>>>(from: &mut dyn  Castable, reg: &TraitVTableRegistry) -> Result<&'a mut TTo, CastError> {
     unsafe {
         let vtable = get_vtable::<TTo>(from, reg);
         match vtable {

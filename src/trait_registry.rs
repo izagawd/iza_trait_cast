@@ -15,33 +15,31 @@ use std::ptr::{metadata, null, DynMetadata, Pointee};
 ///
 /// The [`VTableContainer`] not only holds the vtable pointers but also verifies that the registered
 /// object matches the expected concrete type before insertion.
-pub struct TraitVTableRegistry<T: TraitVTableRegisterer>{
-    registerer: T,
+pub struct TraitVTableRegistry{
     trait_registration_mapper: HashMap<TypeId, TypeVTableMapper>,
     registered_traits: HashSet<TypeId>
 }
 
-impl<T: Default + TraitVTableRegisterer> Default for TraitVTableRegistry<T> {
+impl Default for TraitVTableRegistry {
     fn default() -> Self {
         Self{
             registered_traits: HashSet::new(),
-            registerer: T::default(),
             trait_registration_mapper: HashMap::new()
         }
     }
 }
-impl<T: TraitVTableRegisterer> TraitVTableRegistry<T> {
-    pub fn new(registerer: T) -> Self {
+impl TraitVTableRegistry {
+    pub fn new() -> Self {
         Self{
-            registerer,
             trait_registration_mapper: HashMap::new(),
             registered_traits: HashSet::new()
         }
     }
 }
-impl<TraitReg: TraitVTableRegisterer> TraitVTableRegistry<TraitReg> {
+
+impl TraitVTableRegistry {
     /// Used to include a type for casting, so u can cast that type to another trait even when the compiler does not know the underlying type
-    pub fn register_type<T: Any>(&mut self) {
+    pub fn register_type<T: Any>(&mut self,registerer_funcs:  impl IntoIterator<Item=impl FnOnce(&mut RegistererHelper<T>)>) {
         let type_id = TypeId::of::<T>();
         let mut type_registration = match self.trait_registration_mapper.entry(type_id) {
             Entry::Occupied(entry) => entry.into_mut(),
@@ -52,8 +50,9 @@ impl<TraitReg: TraitVTableRegisterer> TraitVTableRegistry<TraitReg> {
             registered_traits: &mut self.registered_traits,
             type_vtable_mapper: type_registration
         };
-        self.registerer.register_trait_vtables_for_type(&mut helper);
-
+        for i in registerer_funcs {
+            i(&mut helper);
+        }
     }
     #[inline]
     pub fn is_trait_registered(&self,type_id: &TypeId) -> bool {
@@ -65,81 +64,6 @@ impl<TraitReg: TraitVTableRegisterer> TraitVTableRegistry<TraitReg> {
     }
 }
 
-
-
-/// ## Example
-///
-/// ```
-/// use std::any::Any;
-/// use iza_trait_cast::trait_registry::{RegistererHelper, TraitVTableRegisterer, TypeVTableMapper};
-///
-/// struct MyRegisterer;
-///
-/// trait Other : Any{}
-///
-/// impl TraitVTableRegisterer for MyRegisterer{
-///     fn register_trait_vtables_for_type(&self, registerer_helper: &mut RegistererHelper<impl Any>) {
-///         registerer_helper.register_trait_vtables::<dyn Other>();
-///        // now if type T implements dyn Other, it will be able to be casted to it
-///        // even when the compiler does not know the concrete type of the object
-///    }
-/// }
-/// ```
-
-
-
-
-
-///
-///
-/// Used to register the vtables for types.
-/// The implementation is used to mention the traits to consider for casting,
-/// so each type registered will be able to be casted to that trait,
-/// if it implements the trait
-///
-/// ## Example
-///
-/// ```
-/// use std::any::Any;
-/// use iza_trait_cast::trait_registry::{RegistererHelper, TraitVTableRegisterer, TypeVTableMapper};
-///
-/// struct MyRegisterer;
-///
-/// trait Other : Any{}
-///
-/// impl TraitVTableRegisterer for MyRegisterer{
-///     fn register_trait_vtables_for_type(&self, registerer_helper: &mut RegistererHelper<impl Any>) {
-///         registerer_helper.register_trait_vtables::<dyn Other>();
-///        // now if type T implements dyn Other, it will be able to be casted to it
-///        // even when the compiler does not know the concrete type of the object
-///    }
-/// }
-/// ```
-pub trait TraitVTableRegisterer {
-    /// ## Example
-    ///
-    /// ```
-    /// use std::any::Any;
-    ///
-    ///
-    /// use iza_trait_cast::trait_registry::{RegistererHelper, TraitVTableRegisterer, TypeVTableMapper};
-    ///
-    /// struct MyRegisterer;
-    ///
-    /// trait Other : Any{}
-    ///
-    /// impl TraitVTableRegisterer for MyRegisterer{
-    ///     fn register_trait_vtables_for_type(&self, registerer_helper: &mut RegistererHelper<impl Any>) {
-    ///         registerer_helper.register_trait_vtables::<dyn Other>();
-    ///        // now if type T implements dyn Other, it will be able to be casted to it
-    ///        // even when the compiler does not know the concrete type of the object
-    ///    }
-    /// }
-    /// ```
-    fn register_trait_vtables_for_type(&self, registerer_helper: &mut RegistererHelper<impl Any>){
-
-    }
-}
 
 pub enum CastError {
     TraitNotImplemented{
@@ -184,7 +108,7 @@ impl<T: Any> Castable for T{
     }
 }
 /// Gets the vtable
-pub(crate) fn get_vtable<TCastTo: ?Sized + 'static + Pointee<Metadata=DynMetadata<TCastTo>>>(obj: &(impl Castable + ?Sized),  type_registry: &TraitVTableRegistry<impl TraitVTableRegisterer>) -> Result<&'static (), CastError>{
+pub(crate) fn get_vtable<TCastTo: ?Sized + 'static + Pointee<Metadata=DynMetadata<TCastTo>>>(obj: &(impl Castable + ?Sized),  type_registry: &TraitVTableRegistry) -> Result<&'static (), CastError>{
     let obj_type_id = obj.type_id();
     let type_registration_maybe =type_registry.trait_registration_mapper.get(&obj_type_id);
     match type_registration_maybe{
