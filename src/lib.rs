@@ -1,7 +1,6 @@
 #![feature(allocator_api)]
 #![feature(specialization)]
 #![feature(ptr_metadata)]
-#![feature(const_type_name)]
 #![feature(unsize)]
 pub mod trait_registry;
 mod handy_functions;
