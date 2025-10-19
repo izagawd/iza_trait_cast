@@ -153,6 +153,8 @@ use std::any;
             Err(e) => panic!("Mutable casting failed with error: {:?}", e),
         }
     }
+
+    // testing that it gives a NotRegistered error when checking if a type implements a trait, and that fact has not been registered
     #[test]
     fn trait_not_registered_test() {
         // Define a trait that we will not register.
